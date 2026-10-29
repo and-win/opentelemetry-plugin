@@ -171,7 +171,15 @@ public class MonitoringComputerListener extends ComputerListener implements Open
         }
 
         LOGGER.log(Level.FINE, () -> "preOnline(" + computer + "): " + openTelemetryAttributesAction);
-        computer.addAction(openTelemetryAttributesAction);
+        OpenTelemetryAttributesAction existingAction = computer.getAction(OpenTelemetryAttributesAction.class);
+        if (existingAction == null) {
+            computer.addAction(openTelemetryAttributesAction);
+        } else {
+            // The Computer is kept when the agent reconnects and it does not support removing or replacing actions,
+            // so update the existing action instead of adding one more on each reconnect.
+            existingAction.getAttributes().clear();
+            existingAction.getAttributes().putAll(openTelemetryAttributesAction.getAttributes());
+        }
     }
 
     @Override
